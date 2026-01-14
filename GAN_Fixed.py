@@ -1,6 +1,6 @@
 """
-基础但稳定的DCGAN实现
-针对您的训练问题专门优化
+Basic but Stable DCGAN Implementation
+Specifically optimized for your training issues
 """
 import torch
 import torch.nn as nn
@@ -12,37 +12,37 @@ import numpy as np
 from torch.utils.data import DataLoader
 import os
 
-# 设备设置
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-# 超参数 - 经过验证的稳定设置
+# Hyperparameters - validated stable settings
 class Config:
-    # 数据参数
+    # Data parameters
     batch_size = 64
     latent_dim = 100
     img_size = 28
     channels = 1
     
-    # 训练参数 - 关键调整！
-    g_lr = 0.0002    # 原始论文的学习率
-    d_lr = 0.0002    # 相同的学习率
+    # Training parameters - critical adjustments!
+    g_lr = 0.0002    # Learning rate from original paper
+    d_lr = 0.0002    # Same learning rate
     beta1 = 0.5
     
-    # 训练策略
+    # Training strategy
     epochs = 30
     d_train_steps = 1
-    g_train_steps = 1  # 回到1:1训练
+    g_train_steps = 1  # Back to 1:1 training
     
-    # 稳定性增强
-    label_smoothing = 0.1      # 适中的标签平滑
-    noise_std = 0.05           # 判别器输入噪声
+    # Stability enhancements
+    label_smoothing = 0.1      # Moderate label smoothing
+    noise_std = 0.05           # Discriminator input noise
     dropout_rate = 0.3
     
     sample_interval = 100
     save_interval = 5
 
-# 数据加载
+# Data loading
 print("Loading data...")
 transform = transforms.Compose([
     transforms.ToTensor(),
@@ -59,7 +59,7 @@ train_loader = DataLoader(
 
 print(f"Training samples: {len(train_dataset)}")
 
-# 生成器 - DCGAN风格
+# Generator - DCGAN style
 class DCGAN_Generator(nn.Module):
     def __init__(self):
         super().__init__()
@@ -87,7 +87,7 @@ class DCGAN_Generator(nn.Module):
         img = self.conv_blocks(out)
         return img
 
-# 判别器 - 适当弱化
+# Discriminator - appropriately weakened
 class DCGAN_Discriminator(nn.Module):
     def __init__(self):
         super().__init__()
@@ -107,7 +107,7 @@ class DCGAN_Discriminator(nn.Module):
             *discriminator_block(256, 512),
         )
         
-        # 计算输出尺寸
+        # Calculate output size
         ds_size = Config.img_size // 16
         self.adv_layer = nn.Sequential(
             nn.Linear(512 * ds_size * ds_size, 1),
@@ -120,29 +120,29 @@ class DCGAN_Discriminator(nn.Module):
         validity = self.adv_layer(out)
         return validity
 
-# 初始化模型
+# Initialize models
 print("\nInitializing models...")
 generator = DCGAN_Generator().to(device)
 discriminator = DCGAN_Discriminator().to(device)
 
-# 损失函数 - 使用带标签平滑的BCE
+# Loss function - BCE with label smoothing
 criterion = nn.BCELoss()
 
-# 优化器 - 使用Adam，这是DCGAN的标准选择
+# Optimizers - using Adam, standard choice for DCGAN
 optimizer_G = optim.Adam(generator.parameters(), lr=Config.g_lr, betas=(Config.beta1, 0.999))
 optimizer_D = optim.Adam(discriminator.parameters(), lr=Config.d_lr, betas=(Config.beta1, 0.999))
 
-# 训练监控
+# Training monitoring
 G_losses = []
 D_losses = []
 real_accuracies = []
 fake_accuracies = []
 
-# 固定噪声用于生成样本
+# Fixed noise for generating samples
 fixed_noise = torch.randn(64, Config.latent_dim, device=device)
 
 def train_dcgan():
-    """DCGAN标准训练循环"""
+    """Standard DCGAN training loop"""
     print("\nStarting DCGAN training...")
     print("Configuration:")
     print(f"  Batch size: {Config.batch_size}")
@@ -160,44 +160,44 @@ def train_dcgan():
             batch_count += 1
             real_imgs = real_imgs.to(device)
             
-            # ===== 准备标签 =====
-            # 标签平滑：真实标签0.9，假标签0.1
+            # ===== Prepare labels =====
+            # Label smoothing: real labels 0.9, fake labels 0.1
             real_labels = torch.full((batch_size, 1), 0.9, device=device)
             fake_labels = torch.full((batch_size, 1), 0.1, device=device)
             
-            # ===== 训练判别器 =====
+            # ===== Train Discriminator =====
             optimizer_D.zero_grad()
             
-            # 真实图像损失
+            # Real image loss
             real_pred = discriminator(real_imgs)
             d_real_loss = criterion(real_pred, real_labels)
             real_acc = (real_pred > 0.5).float().mean().item()
             
-            # 生成假图像
+            # Generate fake images
             z = torch.randn(batch_size, Config.latent_dim, device=device)
             fake_imgs = generator(z)
             
-            # 假图像损失
+            # Fake image loss
             fake_pred = discriminator(fake_imgs.detach())
             d_fake_loss = criterion(fake_pred, fake_labels)
             fake_acc = (fake_pred < 0.5).float().mean().item()
             
-            # 总判别器损失
+            # Total discriminator loss
             d_loss = (d_real_loss + d_fake_loss) / 2
             d_loss.backward()
             optimizer_D.step()
             
-            # ===== 训练生成器 =====
+            # ===== Train Generator =====
             optimizer_G.zero_grad()
             
-            # 生成器希望判别器认为假图像是真的
+            # Generator tries to make discriminator think fake images are real
             gen_pred = discriminator(fake_imgs)
-            g_loss = criterion(gen_pred, real_labels)  # 生成器希望判别器输出接近0.9
+            g_loss = criterion(gen_pred, real_labels)  # Generator wants discriminator output close to 0.9
             
             g_loss.backward()
             optimizer_G.step()
             
-            # 记录损失和准确率
+            # Record losses and accuracies
             epoch_g_loss += g_loss.item()
             epoch_d_loss += d_loss.item()
             
@@ -206,7 +206,7 @@ def train_dcgan():
             real_accuracies.append(real_acc)
             fake_accuracies.append(fake_acc)
             
-            # 定期输出
+            # Periodic output
             if i % Config.sample_interval == 0:
                 avg_g = epoch_g_loss / batch_count
                 avg_d = epoch_d_loss / batch_count
@@ -215,13 +215,13 @@ def train_dcgan():
                       f"[D: {avg_d:.4f}] [G: {avg_g:.4f}] "
                       f"[Real Acc: {real_acc:.2%}] [Fake Acc: {fake_acc:.2%}]")
                 
-                # 生成样本
+                # Generate samples
                 with torch.no_grad():
                     generator.eval()
                     samples = generator(fixed_noise).cpu()
                     generator.train()
                     
-                    # 保存样本图像
+                    # Save sample images
                     fig, axes = plt.subplots(8, 8, figsize=(10, 10))
                     for idx, ax in enumerate(axes.flat):
                         ax.imshow(samples[idx].squeeze(), cmap='gray')
@@ -231,12 +231,12 @@ def train_dcgan():
                     plt.savefig(f'dcgan_samples_epoch_{epoch}_batch_{i}.png', dpi=100)
                     plt.close()
         
-        # 每个epoch的平均损失
+        # Average losses per epoch
         avg_epoch_g = epoch_g_loss / batch_count
         avg_epoch_d = epoch_d_loss / batch_count
         print(f"Epoch {epoch} completed - Avg D Loss: {avg_epoch_d:.4f}, Avg G Loss: {avg_epoch_g:.4f}")
         
-        # 保存模型检查点
+        # Save model checkpoints
         if (epoch + 1) % Config.save_interval == 0:
             torch.save(generator.state_dict(), f'dcgan_generator_epoch_{epoch}.pth')
             torch.save(discriminator.state_dict(), f'dcgan_discriminator_epoch_{epoch}.pth')
@@ -245,16 +245,16 @@ def train_dcgan():
     return G_losses, D_losses, real_accuracies, fake_accuracies
 
 def analyze_results(G_losses, D_losses, real_acc, fake_acc):
-    """分析训练结果"""
+    """Analyze training results"""
     print("\nAnalyzing training results...")
     
-    # 创建移动平均函数
+    # Create moving average function
     def moving_average(data, window_size=50):
         return np.convolve(data, np.ones(window_size)/window_size, mode='valid')
     
     fig, axes = plt.subplots(2, 3, figsize=(15, 10))
     
-    # 1. 原始损失曲线
+    # 1. Raw loss curves
     axes[0, 0].plot(G_losses, label='Generator Loss', alpha=0.6, linewidth=1)
     axes[0, 0].plot(D_losses, label='Discriminator Loss', alpha=0.6, linewidth=1)
     axes[0, 0].set_xlabel('Iteration')
@@ -263,7 +263,7 @@ def analyze_results(G_losses, D_losses, real_acc, fake_acc):
     axes[0, 0].legend()
     axes[0, 0].grid(True, alpha=0.3)
     
-    # 2. 移动平均损失
+    # 2. Moving average loss
     window = 100
     if len(G_losses) > window:
         g_smooth = moving_average(G_losses, window)
@@ -276,7 +276,7 @@ def analyze_results(G_losses, D_losses, real_acc, fake_acc):
         axes[0, 1].legend()
         axes[0, 1].grid(True, alpha=0.3)
     
-    # 3. 准确率曲线
+    # 3. Accuracy curves
     if len(real_acc) > window:
         real_smooth = moving_average(real_acc, window)
         fake_smooth = moving_average(fake_acc, window)
@@ -289,7 +289,7 @@ def analyze_results(G_losses, D_losses, real_acc, fake_acc):
         axes[0, 2].legend()
         axes[0, 2].grid(True, alpha=0.3)
     
-    # 4. 损失比例
+    # 4. Loss ratio
     if len(G_losses) > window:
         g_ma = moving_average(G_losses, window)
         d_ma = moving_average(D_losses, window)
@@ -309,7 +309,7 @@ def analyze_results(G_losses, D_losses, real_acc, fake_acc):
         axes[1, 0].legend()
         axes[1, 0].grid(True, alpha=0.3)
     
-    # 5. 损失差异
+    # 5. Loss difference
     if len(G_losses) > window:
         loss_diff = moving_average(np.array(G_losses) - np.array(D_losses), window)
         axes[1, 1].plot(loss_diff, color='brown', linewidth=2)
@@ -320,10 +320,10 @@ def analyze_results(G_losses, D_losses, real_acc, fake_acc):
         axes[1, 1].set_title('Loss Difference (should be small)')
         axes[1, 1].grid(True, alpha=0.3)
     
-    # 6. 训练状态诊断
+    # 6. Training status diagnosis
     axes[1, 2].axis('off')
     
-    # 诊断文本
+    # Diagnosis text
     final_g = np.mean(G_losses[-100:]) if len(G_losses) > 100 else G_losses[-1]
     final_d = np.mean(D_losses[-100:]) if len(D_losses) > 100 else D_losses[-1]
     final_real_acc = np.mean(real_acc[-100:]) if len(real_acc) > 100 else real_acc[-1]
@@ -342,7 +342,7 @@ def analyze_results(G_losses, D_losses, real_acc, fake_acc):
     Status Assessment:
     """
     
-    # 评估训练状态
+    # Evaluate training status
     if 0.3 < final_g/final_d < 3.0:
         diagnosis += "✅ Loss ratio is GOOD (0.3-3.0)\n"
     else:
@@ -368,18 +368,18 @@ def analyze_results(G_losses, D_losses, real_acc, fake_acc):
     plt.savefig('dcgan_training_analysis.png', dpi=120, bbox_inches='tight')
     plt.show()
 
-# 生成最终样本函数
+# Generate final samples function
 def generate_final_samples(generator, num_samples=64, save_path='final_generated.png'):
-    """生成并显示最终样本"""
+    """Generate and display final samples"""
     generator.eval()
     with torch.no_grad():
         z = torch.randn(num_samples, Config.latent_dim, device=device)
         samples = generator(z).cpu()
     
-    # 反归一化
+    # Denormalize
     samples = (samples + 1) / 2
     
-    # 显示
+    # Display
     fig, axes = plt.subplots(8, 8, figsize=(12, 12))
     for idx, ax in enumerate(axes.flat):
         ax.imshow(samples[idx].squeeze(), cmap='gray')
@@ -393,22 +393,22 @@ def generate_final_samples(generator, num_samples=64, save_path='final_generated
     print(f"Final samples saved to {save_path}")
     return samples
 
-# 主程序
+# Main program
 if __name__ == "__main__":
-    # 训练
+    # Training
     G_losses, D_losses, real_acc, fake_acc = train_dcgan()
     
-    # 分析结果
+    # Analyze results
     analyze_results(G_losses, D_losses, real_acc, fake_acc)
     
-    # 生成最终样本
+    # Generate final samples
     final_samples = generate_final_samples(generator, save_path='dcgan_final_samples.png')
     
-    # 保存最终模型
+    # Save final models
     torch.save(generator.state_dict(), 'dcgan_generator_final.pth')
     torch.save(discriminator.state_dict(), 'dcgan_discriminator_final.pth')
     
-    # 保存训练统计
+    # Save training statistics
     training_stats = {
         'G_losses': G_losses,
         'D_losses': D_losses,

@@ -373,11 +373,11 @@ conda install pytorch torchvision matplotlib numpy
 
 ### 2. 快速开始
 
-#### 方式一：Jupyter笔记本（推荐）
+#### Jupyter笔记本（推荐）
 
 ```bash
 # 打开笔记本
-jupyter notebook DCGAN_Training.ipynb
+jupyter notebook DCGAN_Clean.ipynb
 
 # 执行单元格：
 # 1. 运行"Step 1: Start Training"进行训练
@@ -386,24 +386,18 @@ jupyter notebook DCGAN_Training.ipynb
 # 4. 运行"Step 4: Save Models and Statistics"保存模型
 ```
 
-#### 方式二：Python脚本
-
-```bash
-python GAN_Fixed.py
-```
 
 ### 3. 训练配置调整
 
-编辑`DCGAN_Training.ipynb`中的`Config`类：
+编辑`DCGAN_Clean.ipynb`中的`Config`类：
 
 ```python
 class Config:
     batch_size = 64           # 批处理大小
     epochs = 30               # 训练轮数
     g_lr = 0.0002             # 生成器学习率
-    d_lr = 0.0002             # 判别器学习率
-    label_smoothing = 0.1     # 标签平滑系数
-    dropout_rate = 0.3        # Dropout比例
+    d_lr = 0.0002             # 判别器学习率CL
+    dropout = 0.3        # Dropout比例
 ```
 
 ### 4. 加载预训练模型
@@ -411,7 +405,7 @@ class Config:
 ```python
 # 加载已训练的生成器
 generator = DCGAN_Generator()
-generator.load_state_dict(torch.load('dcgan_generator_final.pth'))
+generator.load_state_dict(torch.load('Run/G_final.pth'))
 generator.eval()
 
 # 生成新样本
@@ -422,47 +416,6 @@ with torch.no_grad():
 
 ---
 
-## 项目输出
-
-### 生成的文件
-
-| 文件 | 说明 |
-|------|------|
-| `dcgan_generator_final.pth` | 最终训练的生成器模型 |
-| `dcgan_discriminator_final.pth` | 最终训练的判别器模型 |
-| `dcgan_training_stats.pth` | 训练统计数据（损失、准确率） |
-| `dcgan_training_analysis.png` | 6图分析报告 |
-| `dcgan_final_samples.png` | 最终生成的64个样本 |
-| `dcgan_generator_epoch_*.pth` | 每10轮的生成器检查点 |
-| `dcgan_discriminator_epoch_*.pth` | 每10轮的判别器检查点 |
-| `dcgan_samples_epoch_*_batch_*.png` | 训练过程中的采样图像 |
-
-### 示例输出
-
-训练成功后，你会看到：
-
-1. **实时训练日志**
-   ```
-   [Epoch  0] [Batch   0/937] [D: 0.6931] [G: 0.6931] [Real Acc: 45.31%] [Fake Acc: 54.69%]
-   [Epoch  0] [Batch 500/937] [D: 0.5234] [G: 0.8421] [Real Acc: 68.75%] [Fake Acc: 31.25%]
-   ```
-
-2. **最终诊断报告**
-   ```
-   Final Stats (last 100 iterations):
-   • Generator Loss: 0.7234
-   • Discriminator Loss: 0.6821
-   • Real Accuracy: 68.43%
-   • Fake Accuracy: 72.15%
-   • Loss Ratio: 1.06
-   
-   Status Assessment:
-   ✓ Loss ratio is GOOD (0.3-3.0)
-   ✓ Accuracy is GOOD (balanced)
-   ✓ Loss values in good range
-   ```
-
----
 
 ## 理论深度探讨
 

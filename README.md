@@ -1,4 +1,4 @@
-# DCGAN - 稳定的深度卷积生成对抗网络
+# DCGAN - 稳定的深度卷积生成对抗网络(该README为AI生成)
 
 ## 项目概述
 
@@ -565,38 +565,6 @@ z_interp = torch.lerp(z1, z2, torch.linspace(0, 1, 10))
 
 4. **批标准化**
    - Ioffe, S., & Szegedy, C. "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift" (2015)
-
----
-
-## 项目结构
-
-```
-homework/
-├── DCGAN_Training.ipynb          # 完整的交互式Jupyter笔记本
-├── GAN_Fixed.py                  # 原始Python脚本版本
-├── GAN.py                         # 备用版本
-├── Read_model.py                 # 模型读取工具
-├── test.py                       # 测试脚本
-├── README.md                     # 本说明文档
-│
-├── data/
-│   └── MNIST/                    # MNIST数据集
-│       └── raw/
-│           ├── t10k-images-idx3-ubyte
-│           ├── t10k-labels-idx1-ubyte
-│           ├── train-images-idx3-ubyte
-│           └── train-labels-idx1-ubyte
-│
-├── generated_epoch/              # 生成的样本存储
-│
-└── 模型文件（训练后生成）
-    ├── dcgan_generator_final.pth
-    ├── dcgan_discriminator_final.pth
-    ├── dcgan_training_stats.pth
-    ├── dcgan_generator_epoch_*.pth
-    ├── dcgan_discriminator_epoch_*.pth
-    └── dcgan_samples_epoch_*_batch_*.png
-```
 
 ---
 

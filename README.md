@@ -14,7 +14,7 @@ Relinear_simple.ipynb   简洁版的判别器生成器说明文档
 
 Upsample_Demo.ipynb   Upsample方法的说明示例文档
 
-Pooling_vs_Upsample.ipynb   对比课上的Pooling池化方法与GAN中采用的上采样方法两种卷积
+Pooling_vs_Upsample.ipynb   对比课上的Pooling池化方法与GAN中采用的上采样方法
 
 ### 主要特性
 

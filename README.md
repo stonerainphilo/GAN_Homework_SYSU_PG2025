@@ -4,6 +4,18 @@
 
 本项目实现了一个**稳定的深度卷积生成对抗网络（DCGAN）**，用于生成MNIST手写数字。该实现基于原始DCGAN论文的最佳实践，包含详细的训练监控、损失分析和样本生成功能。
 
+### 各文件简介
+
+DCGAN_Clean.ipynb   主要程序，包含注释
+
+Relinear.ipynb   判别器和生成器的结构说明文档
+
+Relinear_simple.ipynb   简洁版的判别器生成器说明文档
+
+Upsample_Demo.ipynb   Upsample方法的说明示例文档
+
+Pooling_vs_Upsample.ipynb   对比课上的Pooling池化方法与GAN中采用的上采样方法两种卷积
+
 ### 主要特性
 
 - ✅ **稳定训练配置** - 基于DCGAN原始论文的优化参数
